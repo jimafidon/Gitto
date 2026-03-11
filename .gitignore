@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+.env
+.env.local
+.env.development.local
+.env.production.local
+
+frontend/.next/
+frontend/out/
+
+.DS_Store
+Thumbs.db
+*.log
+.vercel
