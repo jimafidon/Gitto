@@ -1,0 +1,1611 @@
+/* ============================================================
+   GITTO — Global Stylesheet
+   index.css
+
+   TABLE OF CONTENTS
+   -----------------
+   1.  Fonts
+   2.  CSS Variables (Design Tokens)
+   3.  Reset & Base
+   4.  Scrollbar
+   5.  Typography Utilities
+   6.  Layout Utilities
+   7.  Page Wrapper
+   8.  Navigation
+   9.  Buttons
+   10. Cards
+   11. Badges
+   12. Form Inputs
+   13. Progress Bar
+   14. Tags
+   15. Avatar
+   16. Divider
+   17. Action Buttons (likes / comments / share)
+   18. Compose / Textarea Input
+   19. Sidebar
+   20. Milestone Timeline
+   21. Animations
+   22. Page-specific: Login
+   23. Page-specific: Feed
+   24. Page-specific: Profile
+   25. Page-specific: Search
+   26. Page-specific: Project Detail
+   ============================================================ */
+
+
+/* ============================================================
+   1. FONTS
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+
+/* ============================================================
+   2. CSS VARIABLES (Design Tokens)
+   All colours, spacing, and fonts live here.
+   Change a value once — it updates everywhere.
+   ============================================================ */
+:root {
+    /* Backgrounds */
+    --bg: #0d0d0f;
+    /* page background           */
+    --surface: #141417;
+    /* card / panel background   */
+    --surface2: #1c1c21;
+    /* input / secondary surface */
+    --surface3: #242429;
+    /* hover states              */
+
+    /* Borders */
+    --border: #2a2a32;
+
+    /* Accent colours */
+    --accent: #7fff6e;
+    /* primary green             */
+    --accent2: #4fffdf;
+    /* teal                      */
+    --accent3: #ff6e6e;
+    /* red / destructive         */
+
+    /* Text */
+    --text: #f0f0f2;
+    /* primary text              */
+    --text2: #9090a0;
+    /* secondary / muted text    */
+    --text3: #5a5a6a;
+    /* placeholder / timestamps  */
+
+    /* Shape */
+    --radius: 12px;
+
+    /* Typography */
+    --font-display: 'Syne', sans-serif;
+    /* headings, logo, labels */
+    --font-body: 'DM Sans', sans-serif;
+    /* body copy, UI text     */
+
+    /* Layout */
+    --nav-h: 60px;
+    /* fixed nav height       */
+    --sidebar-w: 220px;
+    /* left sidebar width     */
+    --right-w: 260px;
+    /* right sidebar width    */
+
+    /* Fluid spacing — scales between viewport sizes automatically */
+    --gap: clamp(12px, 2vw, 24px);
+    /* grid / component gaps  */
+    --pad: clamp(12px, 3vw, 32px);
+    /* page edge padding      */
+}
+
+
+/* ============================================================
+   3. RESET & BASE
+   ============================================================ */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    width: 100%;
+    min-height: 100vh;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    width: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+
+/* ============================================================
+   4. SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--surface3);
+}
+
+
+/* ============================================================
+   5. TYPOGRAPHY UTILITIES
+   ============================================================ */
+
+/* Section label — small all-caps heading */
+.label-caps {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+}
+
+/* Muted helper text */
+.text-muted {
+    color: var(--text2);
+}
+
+.text-dim {
+    color: var(--text3);
+}
+
+.text-accent {
+    color: var(--accent);
+}
+
+
+/* ============================================================
+   6. LAYOUT UTILITIES
+   ============================================================ */
+.flex {
+    display: flex;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flex-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.gap-sm {
+    gap: 6px;
+}
+
+.gap-md {
+    gap: 12px;
+}
+
+.gap-lg {
+    gap: 20px;
+}
+
+.wrap {
+    flex-wrap: wrap;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.min-w-0 {
+    min-width: 0;
+}
+
+/* prevents flex children overflowing */
+
+
+/* ============================================================
+   7. PAGE WRAPPER
+   Every routed page should use className="page"
+   ============================================================ */
+.page {
+    padding-top: var(--nav-h);
+    min-height: 100vh;
+    width: 100%;
+}
+
+
+/* ============================================================
+   8. NAVIGATION
+   ============================================================ */
+.nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    height: var(--nav-h);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--pad);
+    background: rgba(13, 13, 15, 0.90);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+    font-family: var(--font-display);
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.nav-logo span {
+    color: var(--text);
+}
+
+.nav-links {
+    display: flex;
+    gap: 4px;
+}
+
+.nav-link {
+    padding: 7px clamp(8px, 1.2vw, 14px);
+    border-radius: 8px;
+    font-size: clamp(12px, 1.1vw, 14px);
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text2);
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.nav-link:hover {
+    background: var(--surface2);
+    color: var(--text);
+}
+
+.nav-link.active {
+    background: var(--surface2);
+    color: var(--accent);
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* Small circular avatar used in the nav */
+.avatar-sm {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #000;
+    font-family: var(--font-display);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+
+/* ============================================================
+   9. BUTTONS
+   Usage:
+     <button className="btn btn-primary">Save</button>
+     <button className="btn btn-ghost btn-sm">Cancel</button>
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s, transform 0.15s, color 0.15s;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+/* Filled — primary action */
+.btn-primary {
+    background: var(--accent);
+    color: #000;
+}
+
+.btn-primary:hover {
+    background: #9cff8e;
+    transform: translateY(-1px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Ghost — secondary action */
+.btn-ghost {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-ghost:hover {
+    background: var(--surface3);
+}
+
+/* Danger */
+.btn-danger {
+    background: rgba(255, 110, 110, 0.15);
+    color: var(--accent3);
+    border: 1px solid rgba(255, 110, 110, 0.25);
+}
+
+.btn-danger:hover {
+    background: rgba(255, 110, 110, 0.25);
+}
+
+/* Size modifier */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 15px;
+}
+
+/* Full-width modifier */
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+
+/* ============================================================
+   10. CARDS
+   ============================================================ */
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.card-sm {
+    padding: 14px;
+}
+
+.card-lg {
+    padding: 28px;
+}
+
+
+/* ============================================================
+   11. BADGES
+   Usage: <span className="badge badge-green">In Progress</span>
+   ============================================================ */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    white-space: nowrap;
+}
+
+.badge-green {
+    background: rgba(127, 255, 110, 0.12);
+    color: var(--accent);
+}
+
+.badge-teal {
+    background: rgba(79, 255, 223, 0.12);
+    color: var(--accent2);
+}
+
+.badge-red {
+    background: rgba(255, 110, 110, 0.12);
+    color: var(--accent3);
+}
+
+.badge-gray {
+    background: var(--surface2);
+    color: var(--text2);
+}
+
+
+/* ============================================================
+   12. FORM INPUTS
+   ============================================================ */
+.input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.input:focus {
+    border-color: var(--accent);
+}
+
+.input::placeholder {
+    color: var(--text3);
+}
+
+.input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Stacked label + input group */
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 6px;
+}
+
+
+/* ============================================================
+   13. PROGRESS BAR
+   Usage:
+     <div className="progress-wrap">
+       <div className="progress-fill" style={{ width: '65%' }} />
+     </div>
+   ============================================================ */
+.progress-wrap {
+    width: 100%;
+    height: 6px;
+    background: var(--surface3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.5s ease;
+}
+
+/* Thicker variant */
+.progress-wrap.progress-lg {
+    height: 10px;
+}
+
+
+/* ============================================================
+   14. TAGS
+   Usage: <span className="tag">#buildinpublic</span>
+   ============================================================ */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--surface3);
+    color: var(--text2);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.tag:hover {
+    color: var(--text);
+    border-color: var(--text3);
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   15. AVATAR
+   Usage: <div className="avatar" style={{ background: gradient }}>AR</div>
+   ============================================================ */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #000;
+    font-family: var(--font-display);
+    flex-shrink: 0;
+}
+
+
+/* ============================================================
+   16. DIVIDER
+   ============================================================ */
+.divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+}
+
+
+/* ============================================================
+   17. ACTION BUTTONS  (like / comment / share row)
+   ============================================================ */
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    border: none;
+    background: var(--surface2);
+    color: var(--text2);
+    transition: background 0.15s, color 0.15s;
+}
+
+.action-btn:hover {
+    background: var(--surface3);
+    color: var(--text);
+}
+
+.action-btn.liked {
+    background: rgba(255, 110, 110, 0.12);
+    color: var(--accent3);
+}
+
+.action-btn.bookmarked {
+    background: rgba(79, 255, 223, 0.12);
+    color: var(--accent2);
+}
+
+
+/* ============================================================
+   18. COMPOSE / TEXTAREA INPUT
+   ============================================================ */
+.compose-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font-body);
+    outline: none;
+    resize: none;
+    min-height: 44px;
+    transition: border-color 0.15s;
+}
+
+.compose-input:focus {
+    border-color: var(--accent);
+}
+
+.compose-input::placeholder {
+    color: var(--text3);
+}
+
+
+/* ============================================================
+   19. SIDEBAR  (shared between Feed left panel & any future sidebar)
+   ============================================================ */
+.sidebar-sticky {
+    position: sticky;
+    top: calc(var(--nav-h) + 16px);
+}
+
+.right-sticky {
+    position: sticky;
+    top: calc(var(--nav-h) + 16px);
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 4px;
+    color: var(--text2);
+    transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-item:hover {
+    background: var(--surface2);
+    color: var(--text);
+}
+
+.sidebar-item.active {
+    background: var(--surface2);
+    color: var(--accent);
+}
+
+.sidebar-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Section label inside sidebar */
+.sidebar-section-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 12px;
+    margin-bottom: 8px;
+}
+
+/* Right-panel section title (Trending, Who to Follow, etc.) */
+.right-title {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    margin-bottom: 12px;
+}
+
+
+/* ============================================================
+   20. MILESTONE TIMELINE
+   ============================================================ */
+.milestone-timeline {
+    position: relative;
+}
+
+/* Vertical connecting line */
+.milestone-timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+
+.milestone-item {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.milestone-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    z-index: 1;
+}
+
+.milestone-dot.done {
+    border-color: var(--accent);
+    background: rgba(127, 255, 110, 0.10);
+}
+
+.milestone-dot.active {
+    border-color: var(--accent2);
+    background: rgba(79, 255, 223, 0.10);
+    animation: pulse 2s infinite;
+}
+
+.milestone-content {
+    flex: 1;
+}
+
+.milestone-content h3 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.milestone-content p {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+}
+
+.milestone-content .date {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 6px;
+}
+
+
+/* ============================================================
+   21. ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(79, 255, 223, 0.30);
+    }
+
+    50% {
+        box-shadow: 0 0 0 6px rgba(79, 255, 223, 0);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 0.8s linear infinite;
+}
+
+
+/* ============================================================
+   22. PAGE-SPECIFIC: LOGIN
+   ============================================================ */
+.login-page {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    background: var(--bg);
+    overflow: hidden;
+    padding-top: 0 !important;
+}
+
+.login-left {
+    flex: 1;
+    padding: clamp(32px, 5vw, 72px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    min-width: 0;
+}
+
+/* Vertical divider between left and right panels */
+.login-left::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+    background: var(--border);
+}
+
+.login-right {
+    flex: 0 0 clamp(320px, 38vw, 520px);
+    padding: clamp(32px, 5vw, 72px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Decorative glow on login right panel */
+.login-right::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(127, 255, 110, 0.07) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.login-logo {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+
+.login-tagline {
+    font-size: clamp(16px, 1.8vw, 22px);
+    color: var(--text2);
+    font-weight: 300;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+
+.login-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.login-feature-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.login-feature-text h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    font-family: var(--font-display);
+}
+
+.login-feature-text p {
+    font-size: 13px;
+    color: var(--text2);
+}
+
+.login-form h2 {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.5vw, 30px);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.login-form p {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.login-divider span {
+    font-size: 12px;
+    color: var(--text3);
+    white-space: nowrap;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.social-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-body);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    transition: background 0.15s;
+}
+
+.social-btn:hover {
+    background: var(--border);
+}
+
+.login-switch {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text2);
+}
+
+.login-switch a {
+    color: var(--accent);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Mobile: stack login panels vertically */
+@media (max-width: 700px) {
+    .login-page {
+        flex-direction: column;
+    }
+
+    .login-left {
+        flex: none;
+        padding: 40px 24px 24px;
+    }
+
+    .login-left::after {
+        display: none;
+    }
+
+    .login-right {
+        flex: none;
+        padding: 24px;
+    }
+}
+
+
+/* ============================================================
+   23. PAGE-SPECIFIC: FEED
+   ============================================================ */
+.feed-layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr var(--right-w);
+    gap: var(--gap);
+    width: 100%;
+    padding: var(--gap) var(--pad);
+    align-items: start;
+}
+
+/* Post cards */
+.post-card {
+    margin-bottom: 14px;
+    transition: transform 0.15s;
+}
+
+.post-card:hover {
+    transform: translateY(-1px);
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.post-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.post-user-info h4 {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-display);
+}
+
+.post-user-info span {
+    font-size: 12px;
+    color: var(--text3);
+}
+
+.post-title {
+    font-family: var(--font-display);
+    font-size: clamp(15px, 1.4vw, 19px);
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.3;
+    cursor: pointer;
+}
+
+.post-body {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 14px;
+}
+
+.post-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Inline milestone preview inside a post */
+.post-milestone {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 14px;
+}
+
+.post-milestone-label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.post-milestone-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* Right panel widgets */
+.trending-tag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.trending-tag:last-child {
+    border-bottom: none;
+}
+
+.trending-tag:hover span:first-child {
+    color: var(--accent);
+}
+
+.suggested-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.suggested-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.suggested-user-info h4 {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-display);
+}
+
+.suggested-user-info span {
+    font-size: 12px;
+    color: var(--text3);
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1100px) {
+    .feed-layout {
+        grid-template-columns: var(--sidebar-w) 1fr;
+    }
+
+    .feed-right-col {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .feed-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .feed-left-col {
+        display: none;
+    }
+}
+
+
+/* ============================================================
+   24. PAGE-SPECIFIC: PROFILE
+   ============================================================ */
+.profile-banner {
+    width: 100%;
+    height: clamp(140px, 18vw, 220px);
+    background: linear-gradient(135deg, #1a2a1a, #0d1a2a, #1a1a2a);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 30% 50%, rgba(127, 255, 110, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 50%, rgba(79, 255, 223, 0.10) 0%, transparent 60%);
+}
+
+.profile-container {
+    width: 100%;
+    padding: 0 var(--pad);
+}
+
+.profile-header {
+    position: relative;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.profile-avatar-wrap {
+    position: absolute;
+    top: -52px;
+    left: 0;
+    width: clamp(72px, 8vw, 100px);
+    height: clamp(72px, 8vw, 100px);
+    border-radius: 50%;
+    border: 4px solid var(--bg);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 34px);
+    font-weight: 800;
+    color: #000;
+}
+
+.profile-info {
+    padding-top: clamp(48px, 6vw, 64px);
+}
+
+.profile-info h1 {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 800;
+}
+
+.profile-info .handle {
+    font-size: 14px;
+    color: var(--text3);
+    margin: 2px 0 8px;
+}
+
+.profile-bio {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.5;
+    max-width: 560px;
+    margin-bottom: 14px;
+}
+
+.profile-stats {
+    display: flex;
+    gap: clamp(14px, 3vw, 32px);
+    flex-wrap: wrap;
+}
+
+.profile-stat .num {
+    font-family: var(--font-display);
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 700;
+}
+
+.profile-stat .label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.profile-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.profile-tab {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text2);
+    transition: background 0.15s, color 0.15s;
+}
+
+.profile-tab.active {
+    background: var(--surface2);
+    color: var(--accent);
+}
+
+.profile-tab:hover:not(.active) {
+    background: var(--surface2);
+    color: var(--text);
+}
+
+.profile-content {
+    padding: 24px 0;
+}
+
+/* Project cards grid on profile page */
+.project-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.project-card-mini {
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.project-card-mini:hover {
+    transform: translateY(-2px);
+}
+
+.pcm-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.pcm-desc {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.pcm-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.pcm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+/* ============================================================
+   25. PAGE-SPECIFIC: SEARCH
+   ============================================================ */
+.search-page {
+    width: 100%;
+    padding: var(--gap) var(--pad);
+}
+
+.search-hero {
+    margin-bottom: 28px;
+}
+
+.search-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+.search-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    transition: border-color 0.15s;
+}
+
+.search-bar-wrap:focus-within {
+    border-color: var(--accent);
+}
+
+.search-bar {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: var(--text);
+    font-family: var(--font-body);
+}
+
+.search-bar::placeholder {
+    color: var(--text3);
+}
+
+.search-icon {
+    font-size: 18px;
+    color: var(--text3);
+    flex-shrink: 0;
+}
+
+.search-filters {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.filter-chip {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text2);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.filter-chip:hover,
+.filter-chip.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+
+.search-section-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.search-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.user-result-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-result-info h4 {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-display);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-result-info span {
+    font-size: 12px;
+    color: var(--text3);
+}
+
+.prj-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.prj-meta {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 8px;
+}
+
+.prj-desc {
+    font-size: 13px;
+    color: var(--text2);
+}
+
+
+/* ============================================================
+   26. PAGE-SPECIFIC: PROJECT DETAIL
+   ============================================================ */
+.project-detail {
+    width: 100%;
+    padding: var(--gap) var(--pad);
+}
+
+.pd-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    width: fit-content;
+    transition: color 0.15s;
+}
+
+.pd-back:hover {
+    color: var(--text);
+}
+
+.pd-title {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3.5vw, 40px);
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1.15;
+}
+
+.pd-meta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    color: var(--text2);
+    font-size: 13px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+/* Stats bar across the top of a project */
+.pd-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    /* gap colour = border line between cells */
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.pd-stat {
+    background: var(--surface2);
+    padding: 16px 20px;
+}
+
+.pd-stat .n {
+    font-family: var(--font-display);
+    font-size: clamp(18px, 2vw, 24px);
+    font-weight: 700;
+}
+
+.pd-stat .l {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Two-column overview layout (main content + sidebar) */
+.pd-body {
+    display: grid;
+    grid-template-columns: 1fr clamp(260px, 28vw, 340px);
+    gap: var(--gap);
+}
+
+@media (max-width: 860px) {
+    .pd-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Update cards */
+.update-card {
+    margin-bottom: 14px;
+}
+
+.update-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.update-date {
+    font-size: 11px;
+    color: var(--text3);
+    margin-left: auto;
+}
