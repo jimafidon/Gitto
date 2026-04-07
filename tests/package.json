@@ -1,0 +1,17 @@
+{
+  "name": "gitto-tests",
+  "version": "1.0.0",
+  "description": "Regression tests for Gitto API",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "supertest": "^7.0.0",
+    "mongoose": "^9.3.0",
+    "dotenv": "^17.3.1"
+  }
+}
