@@ -118,10 +118,9 @@ UserSchema.index({ email: 1 })
 
 // ── Pre-save: hash password ───────────────────────────────────────────────────
 // Only runs when the password field has been changed (not on every save)
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password') || !this.password) return next()
+UserSchema.pre('save', async function () {
+  if (!this.isModified('password') || !this.password) return
   this.password = await bcrypt.hash(this.password, 12)
-  next()
 })
 
 // ── Instance method: compare passwords ───────────────────────────────────────
