@@ -1,39 +1,45 @@
-import jwt from 'jsonwebtoken'
+// // backend/src/middleware/auth.middleware.js
+import jwt  from 'jsonwebtoken'
 import User from '../models/User.js'
-
-function getToken(header = '') {
-  if (!header.startsWith('Bearer ')) return ''
-  return header.slice(7)
-}
-
-function verify(token) {
-  const secret = process.env.JWT_SECRET || 'dev-secret-change-me'
-  return jwt.verify(token, secret)
-}
 
 export async function requireAuth(req, res, next) {
   try {
-    const token = getToken(req.headers.authorization || '')
-    if (!token) return res.status(401).json({ message: 'Authentication required' })
-    const payload = verify(token)
-    const user = await User.findById(payload.sub)
-    if (!user) return res.status(401).json({ message: 'Invalid session' })
+    const authHeader = req.headers.authorization
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'No token provided — please log in' })
+    }
+
+    const token   = authHeader.split(' ')[1]
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const userId  = decoded.id || decoded.sub
+    const user    = await User.findById(userId).select('-password')
+
+    if (!user) return res.status(401).json({ message: 'User no longer exists' })
+
     req.user = user
-    return next()
-  } catch {
-    return res.status(401).json({ message: 'Invalid or expired token' })
+    next()
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Session expired — please log in again' })
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' })
+    }
+    next(err)
   }
 }
 
+// Use on public routes where extra data is shown to logged-in users
 export async function optionalAuth(req, res, next) {
   try {
-    const token = getToken(req.headers.authorization || '')
-    if (!token) return next()
-    const payload = verify(token)
-    const user = await User.findById(payload.sub)
-    if (user) req.user = user
-    return next()
-  } catch {
-    return next()
-  }
+    const authHeader = req.headers.authorization
+    if (authHeader?.startsWith('Bearer ')) {
+      const token   = authHeader.split(' ')[1]
+      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      const userId  = decoded.id || decoded.sub
+      const user    = await User.findById(userId).select('-password')
+      if (user) req.user = user
+    }
+  } catch { /* silently ignore */ }
+  next()
 }
