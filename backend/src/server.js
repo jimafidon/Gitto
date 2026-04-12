@@ -5,9 +5,9 @@ import dotenv   from 'dotenv'
 import { connectDB } from './lib/db.js'
 
 import router    from './routes/auth.routes.js'
-//import postsRouter   from './routes/posts.routes.js'
-//import usersRouter   from './routes/users.routes.js'
-//import projectRouter from './routes/projects.routes.js'
+import postsRouter   from './routes/posts.routes.js'
+import usersRouter   from './routes/users.routes.js'
+import projectRouter from './routes/projects.routes.js'
 
 import { notFound, errorHandler } from './middleware/error.middleware.js'
 
@@ -20,9 +20,9 @@ app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:3000' }))
 app.use(express.json())
 
 app.use('/api/auth',     router)
-// app.use('/api/posts',    postsRouter)
-// app.use('/api/users',    usersRouter)
-// app.use('/api/projects', projectRouter)
+app.use('/api/posts',    postsRouter)
+app.use('/api/users',    usersRouter)
+app.use('/api/projects', projectRouter)
 
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))
 
