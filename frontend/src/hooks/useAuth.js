@@ -13,6 +13,14 @@ import { authService } from '@/services/auth.service'
 
 const AuthContext = createContext(null)
 
+// Backend login/register returns `id`, but getMe returns `_id`.
+// Normalize so every consumer always sees `_id`.
+function normalizeUser(u) {
+  if (!u) return null
+  if (!u._id && u.id) return { ...u, _id: u.id }
+  return u
+}
+
 // Wrap your root layout with this provider
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null)
@@ -23,7 +31,7 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('gitto_token')
     if (token) {
       authService.getMe()
-        .then(setUser)
+        .then(u => setUser(normalizeUser(u)))
         .catch(() => localStorage.removeItem('gitto_token'))
         .finally(() => setLoading(false))
     } else {
@@ -33,13 +41,13 @@ export function AuthProvider({ children }) {
 
   async function login(credentials) {
     const data = await authService.login(credentials)
-    setUser(data.user)
+    setUser(normalizeUser(data.user))
     return data
   }
 
   async function register(credentials) {
     const data = await authService.register(credentials)
-    setUser(data.user)
+    setUser(normalizeUser(data.user))
     return data
   }
 

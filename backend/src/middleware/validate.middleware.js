@@ -66,6 +66,69 @@ export function validateCreatePost(req, res, next) {
   return next()
 }
 
+// Normalize project status to a schema-supported value.
+function normalizeProjectStatus(value = '') {
+  const normalized = String(value || '').trim()
+  const allowed = ['in_progress', 'paused', 'completed']
+  return allowed.includes(normalized) ? normalized : 'in_progress'
+}
+
+// Normalize milestone status to a schema-supported value.
+function normalizeMilestoneStatus(value = '') {
+  const normalized = String(value || '').trim()
+  const allowed = ['upcoming', 'in_progress', 'completed']
+  return allowed.includes(normalized) ? normalized : 'upcoming'
+}
+
+// Clamp numeric progress to an integer between 0 and 100.
+function normalizeProgress(value, defaultValue = 0) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return defaultValue
+  return Math.max(0, Math.min(100, Math.round(num)))
+}
+
+// Normalize project milestones and drop empty titles.
+function normalizeProjectMilestones(milestones = []) {
+  if (!Array.isArray(milestones)) return []
+  return milestones
+    .map((m) => ({
+      title: String(m?.title || '').trim().slice(0, 120),
+      description: String(m?.description || '').trim().slice(0, 500),
+      status: normalizeMilestoneStatus(m?.status),
+      progress: normalizeProgress(m?.progress, 0),
+    }))
+    .filter((m) => m.title)
+    .slice(0, 20)
+}
+
+// Validate and normalize project creation payload.
+export function validateCreateProject(req, res, next) {
+  const { title, description, status, progress, tags, milestones } = req.body || {}
+
+  if (!title?.trim()) {
+    return res.status(400).json({ message: 'title is required' })
+  }
+
+  if (String(title).trim().length > 120) {
+    return res.status(400).json({ message: 'title cannot exceed 120 characters' })
+  }
+
+  if (description && String(description).trim().length > 2000) {
+    return res.status(400).json({ message: 'description cannot exceed 2000 characters' })
+  }
+
+  req.validatedProject = {
+    title: String(title).trim(),
+    description: String(description || '').trim(),
+    status: normalizeProjectStatus(status),
+    progress: normalizeProgress(progress, 0),
+    tags: normalizeTags(tags),
+    milestones: normalizeProjectMilestones(milestones),
+  }
+
+  return next()
+}
+
 export function validateRegister(req, res, next) {
   const errors = []
   const { name, handle, email, password } = req.body

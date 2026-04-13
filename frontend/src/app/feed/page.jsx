@@ -382,7 +382,7 @@ export default function FeedPage() {
                   #️⃣ Tag
                 </button>
               </div>
-              <button className="btn btn-primary btn-sm" disabled={!compose.trim() || posting || !selectedProjectId} onClick={handleCreatePost}>
+              <button className="btn btn-primary btn-sm" disabled={!compose.trim() || posting} onClick={handleCreatePost}>
                 {posting ? 'Posting...' : 'Post Update'}
               </button>
             </div>
