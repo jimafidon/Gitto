@@ -29,6 +29,7 @@ export default function SavedPage() {
   useEffect(() => {
     if (authLoading) return
     if (!user?._id) {
+      // Saved feed is private; avoid API calls until auth context confirms a user.
       setLoading(false)
       setError('Sign in to view your saved posts.')
       setPosts([])
@@ -39,6 +40,7 @@ export default function SavedPage() {
 
   function handleSaveChange(postId, isSaved) {
     if (isSaved) return
+    // Remove cards immediately when user unsaves from within a post card action.
     setPosts((prev) => prev.filter((post) => post._id !== postId))
   }
 

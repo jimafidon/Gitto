@@ -41,6 +41,7 @@ export default function FeedPage() {
       setLoading(true)
       setError('')
       try {
+        // Keep initial feed render fast by loading feed, suggestions, and owned projects together.
         const [feedData, suggestedData, projectsData] = await Promise.all([
           postsService.getFeed(),
           usersService.getSuggested(),
@@ -60,6 +61,7 @@ export default function FeedPage() {
   }, [authLoading, user?._id])
 
   useEffect(() => {
+    // Reset milestone selection if user changes project or milestone list changes.
     const selectedProject = myProjects.find((p) => p._id === selectedProjectId)
     const hasMilestone = (selectedProject?.milestones || []).some((m) => m.title === selectedMilestoneTitle)
     if (!hasMilestone) setSelectedMilestoneTitle('')
@@ -83,6 +85,7 @@ export default function FeedPage() {
     }
 
     const body = compose.trim()
+    // Generate a lightweight title from the first sentence for feed card readability.
     const firstSentence = body.split(/[.!?]/)[0]?.trim() || ''
     const title = firstSentence ? firstSentence.slice(0, 90) : 'Project update'
     const selectedProject = myProjects.find((p) => p._id === selectedProjectId)
@@ -102,8 +105,10 @@ export default function FeedPage() {
           : undefined,
       })
       if (data.post) {
+        // Prefer optimistic prepend when API returns the created post payload.
         setPosts(prev => [data.post, ...prev])
       } else {
+        // Fallback for older API responses that only return status metadata.
         const refreshed = await postsService.getFeed()
         setPosts(refreshed.posts || [])
       }
@@ -130,6 +135,7 @@ export default function FeedPage() {
   function addTag() {
     const normalized = normalizeTag(tagDraft)
     if (!normalized) return
+    // Ignore duplicates to keep request payload clean for backend validators.
     if (tags.includes(normalized)) {
       setTagDraft('')
       return
@@ -167,6 +173,7 @@ export default function FeedPage() {
       setError('You can attach up to 5 links per update.')
       return
     }
+    // Avoid duplicate links since backend stores attachments as a bounded list.
     if (attachments.some((item) => item.url === url)) {
       setAttachmentDraft('')
       return
@@ -187,6 +194,7 @@ export default function FeedPage() {
     }
     if (!userId || followingIds.includes(userId)) return
 
+    // Track per-user pending state so only that follow button is disabled.
     setFollowingIds(prev => [...prev, userId])
     setError('')
     try {

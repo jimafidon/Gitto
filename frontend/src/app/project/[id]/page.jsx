@@ -9,6 +9,7 @@ import Avatar from '@/components/Avatar'
 import MilestoneTimeline from '@/components/MilestoneTimeline'
 
 function extractErrorInfo(error, fallback = 'Something went wrong. Please try again.') {
+  // Normalize axios/network errors to a shape the UI can reuse across tabs/actions.
   const status = error?.response?.status
   const apiMessage = error?.response?.data?.message
 
@@ -72,6 +73,7 @@ export default function ProjectDetailPage({ params }) {
     setLoadError(null)
     try {
       const data = await projectsService.getById(id)
+      // Mirror derived action states from backend flags so header buttons render correctly.
       setProject(data.project)
       setStarred(Boolean(data.project.starredByMe))
       setFollowed(Boolean(data.project.followedByMe))
@@ -85,6 +87,7 @@ export default function ProjectDetailPage({ params }) {
   }
 
   useEffect(() => {
+    // Reload when URL id changes or auth context swaps users.
     loadProject()
   }, [id, user?._id])
 
@@ -152,6 +155,7 @@ export default function ProjectDetailPage({ params }) {
     if (!url) return
 
     try {
+      // Prefer native share sheet on supported devices, then fall back to clipboard copy.
       if (navigator.share) {
         await navigator.share({
           title: project?.title || 'Project',
@@ -424,6 +428,7 @@ function UpdatesTab({ projectId, isOwner }) {
   }
 
   useEffect(() => {
+    // Keep updates scoped to currently viewed project.
     loadUpdates()
   }, [projectId])
 
@@ -432,6 +437,7 @@ function UpdatesTab({ projectId, isOwner }) {
     setUpdateActionErrors((map) => ({ ...map, [update._id]: '' }))
     setUpdatePending((map) => ({ ...map, [update._id]: true }))
     try {
+      // Toggle like endpoint based on current local state.
       if (update.likedByMe) {
         const data = await postsService.unlike(update._id)
         setUpdates(list => list.map(item => (
@@ -567,6 +573,7 @@ function DiscussionTab({ projectId }) {
   }
 
   useEffect(() => {
+    // Reload discussion when navigating between different project detail pages.
     loadComments()
   }, [projectId])
 
