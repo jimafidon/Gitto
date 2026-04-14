@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { signIn } from 'next-auth/react'
 import { useAuth } from '@/hooks/useAuth'
 
 export default function LoginPage() {
@@ -53,7 +54,7 @@ export default function LoginPage() {
           <h2>Welcome back</h2>
           <p>Sign in to continue your journey.</p>
 
-          <button className="social-btn">G &nbsp; Continue with Google</button>
+          <button className="social-btn" onClick={() => signIn('google', { callbackUrl: '/feed' })}>G &nbsp; Continue with Google</button>
           <button className="social-btn">⌘ &nbsp; Continue with GitHub</button>
           <div className="login-divider"><span>or with email</span></div>
 

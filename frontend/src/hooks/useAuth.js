@@ -9,17 +9,28 @@
 'use client'
 
 import { useState, useEffect, createContext, useContext } from 'react'
+import { useSession } from 'next-auth/react'
 import { authService } from '@/services/auth.service'
 
 const AuthContext = createContext(null)
 
 // Wrap your root layout with this provider
 export function AuthProvider({ children }) {
+  const { data: session }     = useSession()
   const [user,    setUser]    = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // On mount, check if there's a stored token and fetch the current user
+  
   useEffect(() => {
+    if (session?.backendToken) {
+      localStorage.setItem('gitto_token', session.backendToken)
+      authService.getMe()
+        .then(setUser)
+        .finally(() => setLoading(false))
+      return
+    }
+    
+    // On mount, check if there's a stored token and fetch the current user
     const token = localStorage.getItem('gitto_token')
     if (token) {
       authService.getMe()
@@ -29,7 +40,7 @@ export function AuthProvider({ children }) {
     } else {
       setLoading(false)
     }
-  }, [])
+  }, [session])
 
   async function login(credentials) {
     const data = await authService.login(credentials)
