@@ -83,3 +83,16 @@ export async function login(req, res, next) {
 export async function getMe(req, res) {
   res.status(200).json({ user: req.user })
 }
+
+// ── GET /api/auth/google/callback ─────────────────────────────────────────────
+export function oauthCallback(req, res) {
+  try {
+    const token       = generateToken(req.user._id)
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000'
+ 
+    res.redirect(`${frontendURL}/auth/callback?token=${token}`)
+  } catch {
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000'
+    res.redirect(`${frontendURL}/login?error=oauth_failed`)
+  }
+}
