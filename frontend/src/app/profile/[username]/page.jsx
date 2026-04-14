@@ -1,13 +1,14 @@
 'use client'
 // frontend/src/app/profile/[username]/page.jsx
 import { useState, useEffect } from 'react'
+import { use } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { usersService } from '@/services/users.service'
 import Avatar from '@/components/Avatar'
 
 export default function ProfilePage({ params }) {
-  const { username } = params
+  const { username } = use(params)
   const { user: currentUser } = useAuth()
   const [profile, setProfile]     = useState(null)
   const [tab, setTab]             = useState('projects')

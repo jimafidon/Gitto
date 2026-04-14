@@ -10,6 +10,7 @@ function idOf(value) {
 
 export function serializeFeedPost(post, currentUserId = '') {
   const likes = post.likes || []
+  const savedBy = post.savedBy || []
   const comments = post.comments || []
   const attachments = post.attachments || []
 
@@ -47,6 +48,7 @@ export function serializeFeedPost(post, currentUserId = '') {
       .filter((item) => item.url),
     likesCount: likes.length,
     likedByMe: currentUserId ? likes.some((likeId) => idOf(likeId) === currentUserId) : false,
+    savedByMe: currentUserId ? savedBy.some((savedUserId) => idOf(savedUserId) === currentUserId) : false,
     commentsCount: comments.length,
   }
 }

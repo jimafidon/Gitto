@@ -25,10 +25,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired — clear storage and redirect to login
+      // Token expired — notify UI, clear storage, then redirect to login.
       if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('gitto:auth-expired', {
+          detail: { message: 'Session expired. Redirecting to login...' },
+        }))
+        sessionStorage.setItem('gitto_auth_notice', 'Session expired. Please log in again.')
         localStorage.removeItem('gitto_token')
-        window.location.href = '/login'
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 600)
       }
     }
     return Promise.reject(error)

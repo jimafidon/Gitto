@@ -129,6 +129,137 @@ export function validateCreateProject(req, res, next) {
   return next()
 }
 
+// Validate and normalize project update payload.
+export function validateUpdateProject(req, res, next) {
+  const { title, description, status, progress, tags, milestones } = req.body || {}
+  const patch = {}
+
+  if (title !== undefined) {
+    const trimmed = String(title || '').trim()
+    if (!trimmed) return res.status(400).json({ message: 'title cannot be empty' })
+    if (trimmed.length > 120) {
+      return res.status(400).json({ message: 'title cannot exceed 120 characters' })
+    }
+    patch.title = trimmed
+  }
+
+  if (description !== undefined) {
+    const trimmed = String(description || '').trim()
+    if (trimmed.length > 2000) {
+      return res.status(400).json({ message: 'description cannot exceed 2000 characters' })
+    }
+    patch.description = trimmed
+  }
+
+  if (status !== undefined) patch.status = normalizeProjectStatus(status)
+  if (progress !== undefined) patch.progress = normalizeProgress(progress, 0)
+  if (tags !== undefined) patch.tags = normalizeTags(tags)
+  if (milestones !== undefined) patch.milestones = normalizeProjectMilestones(milestones)
+
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ message: 'No valid project fields provided' })
+  }
+
+  req.validatedProjectUpdate = patch
+  return next()
+}
+
+// Validate milestone payload for adding a single project milestone.
+export function validateAddProjectMilestone(req, res, next) {
+  const milestone = req.body || {}
+  const title = String(milestone.title || '').trim()
+  const description = String(milestone.description || '').trim()
+
+  if (!title) {
+    return res.status(400).json({ message: 'Milestone title is required' })
+  }
+
+  req.validatedMilestone = {
+    title: title.slice(0, 120),
+    description: description.slice(0, 500),
+    status: normalizeMilestoneStatus(milestone.status),
+    progress: normalizeProgress(milestone.progress, 0),
+  }
+
+  return next()
+}
+
+// Validate discussion comment payload for project discussion.
+export function validateProjectComment(req, res, next) {
+  const body = String(req.body?.body || '').trim()
+  if (!body) {
+    return res.status(400).json({ message: 'Comment body is required' })
+  }
+  if (body.length > 1000) {
+    return res.status(400).json({ message: 'Comment body cannot exceed 1000 characters' })
+  }
+
+  req.validatedProjectComment = { body }
+  return next()
+}
+
+// Validate post comment payload for update card commenting.
+export function validatePostComment(req, res, next) {
+  const body = String(req.body?.body || '').trim()
+  if (!body) {
+    return res.status(400).json({ message: 'Comment body is required' })
+  }
+  if (body.length > 1000) {
+    return res.status(400).json({ message: 'Comment body cannot exceed 1000 characters' })
+  }
+
+  req.validatedPostComment = { body }
+  return next()
+}
+
+// Validate and normalize post update payload.
+export function validateUpdatePost(req, res, next) {
+  const { title, body, tags, milestone, attachments } = req.body || {}
+  const patch = {}
+
+  if (title !== undefined) {
+    const trimmed = String(title || '').trim()
+    if (!trimmed) return res.status(400).json({ message: 'title cannot be empty' })
+    patch.title = trimmed
+  }
+
+  if (body !== undefined) {
+    const trimmed = String(body || '').trim()
+    if (!trimmed) return res.status(400).json({ message: 'body cannot be empty' })
+    patch.body = trimmed
+  }
+
+  if (tags !== undefined) patch.tags = normalizeTags(tags)
+
+  if (attachments !== undefined) {
+    const normalizedAttachments = normalizeAttachments(attachments)
+    const invalidAttachment = normalizedAttachments.find((item) => !isValidHttpUrl(item.url))
+    if (invalidAttachment) {
+      return res.status(400).json({ message: 'Attachments must be valid http(s) links' })
+    }
+    patch.attachments = normalizedAttachments
+  }
+
+  if (milestone !== undefined) {
+    if (milestone === null) {
+      patch.milestone = null
+    } else {
+      const normalized = normalizeMilestone(milestone)
+      if (!normalized) {
+        return res.status(400).json({ message: 'milestone title is required when milestone is provided' })
+      }
+      patch.milestone = normalized
+    }
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return res.status(400).json({ message: 'No valid post fields provided' })
+  }
+
+  req.validatedPostUpdate = patch
+  return next()
+}
+
 export function validateRegister(req, res, next) {
   const errors = []
   const { name, handle, email, password } = req.body

@@ -30,6 +30,7 @@ const postSchema = new mongoose.Schema(
     tags: [{ type: String }],
     attachments: [attachmentSchema],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    savedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     comments: [postCommentSchema],
   },
   { timestamps: true }
