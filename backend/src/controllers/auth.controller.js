@@ -83,3 +83,84 @@ export async function login(req, res, next) {
 export async function getMe(req, res) {
   res.status(200).json({ user: req.user })
 }
+
+// ── POST /api/auth/google ─────────────────────────────────────────────────────
+// Called by NextAuth after it completes the Google OAuth exchange.
+// Finds or creates the user in our DB and returns a backend JWT.
+export async function googleSignIn(req, res, next) {
+  try {
+    const { name, email, avatar, providerId } = req.body
+
+    if (!email) {
+      return res.status(400).json({ message: 'No email provided' })
+    }
+
+    let user = await User.findOne({
+      $or: [
+        { 'providers.provider': 'google', 'providers.providerId': providerId },
+        { email },
+      ],
+    })
+
+    if (user) {
+      const alreadyLinked = user.providers.some(
+        p => p.provider === 'google' && p.providerId === providerId
+      )
+      if (!alreadyLinked) {
+        user.providers.push({ provider: 'google', providerId })
+        if (!user.avatar && avatar) user.avatar = avatar
+        await user.save()
+      }
+    } else {
+      const baseHandle = (name || email.split('@')[0])
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/[^a-z0-9_]/g, '')
+        .slice(0, 15)
+
+      let handle = baseHandle
+      let count  = 1
+      while (await User.findOne({ handle })) {
+        handle = `${baseHandle}${count++}`
+      }
+
+      user = await User.create({
+        name,
+        email,
+        avatar,
+        handle,
+        isVerified: true,
+        password:   null,
+        providers: [{ provider: 'google', providerId }],
+      })
+    }
+
+    const token = generateToken(user._id)
+
+    res.status(200).json({
+      token,
+      user: {
+        id:     user._id,
+        name:   user.name,
+        handle: user.handle,
+        email:  user.email,
+        avatar: user.avatar,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ── GET /api/auth/google/callback ─────────────────────────────────────────────
+export function oauthCallback(req, res) {
+  try {
+    const token       = generateToken(req.user._id)
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000'
+ 
+    res.redirect(`${frontendURL}/auth/callback?token=${token}`)
+  } catch {
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:3000'
+    res.redirect(`${frontendURL}/login?error=oauth_failed`)
+  }
+}
