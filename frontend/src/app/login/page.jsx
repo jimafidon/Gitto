@@ -55,7 +55,7 @@ export default function LoginPage() {
           <p>Sign in to continue your journey.</p>
 
           <button className="social-btn" onClick={() => signIn('google', { callbackUrl: '/feed' })}>G &nbsp; Continue with Google</button>
-          <button className="social-btn">⌘ &nbsp; Continue with GitHub</button>
+          <button className="social-btn" onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/github`}>⌘ &nbsp; Continue with GitHub</button>
           <div className="login-divider"><span>or with email</span></div>
 
           {error && (
