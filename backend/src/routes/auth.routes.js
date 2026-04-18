@@ -21,7 +21,7 @@ router.post('/google', googleSignIn)
 // OAuth routes — uncomment when ready to implement
 router.get('/google',          passport.authenticate('google', { scope: ['profile', 'email'], session: false }))
 router.get('/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/login?error=oauth_failed' }), oauthCallback)
-router.get('/github',          passport.authenticate('github', { scope: ['user:email'] }))
-router.get('/github/callback', passport.authenticate('github'), oauthCallback)
+router.get('/github',          passport.authenticate('github', { scope: ['user:email'], session: false }))
+router.get('/github/callback', passport.authenticate('github', { session: false, failureRedirect: '/login?error=oauth_failed' }), oauthCallback)
 
 export default router
