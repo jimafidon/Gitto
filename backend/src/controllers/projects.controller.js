@@ -11,6 +11,28 @@ function toId(value) {
   return String(value)
 }
 
+function serializeProjectMilestone(milestone) {
+  return {
+    _id: toId(milestone?._id),
+    title: milestone?.title || '',
+    description: milestone?.description || '',
+    progress: milestone?.progress ?? 0,
+    status: milestone?.status || 'upcoming',
+  }
+}
+
+function recalculateProjectProgressFromMilestones(project) {
+  const milestones = project?.milestones || []
+  if (milestones.length === 0) {
+    project.progress = 0
+    return project.progress
+  }
+
+  const completedCount = milestones.filter((milestone) => milestone?.status === 'completed').length
+  project.progress = Math.round((completedCount / milestones.length) * 100)
+  return project.progress
+}
+
 function serializeProject(project, currentUserId = '', updatesCount = 0) {
   const author = project.author || null
   const stars = project.stars || []
@@ -24,12 +46,7 @@ function serializeProject(project, currentUserId = '', updatesCount = 0) {
     status: project.status || 'in_progress',
     progress: project.progress ?? 0,
     tags: project.tags || [],
-    milestones: (project.milestones || []).map((m) => ({
-      title: m.title || '',
-      description: m.description || '',
-      progress: m.progress ?? 0,
-      status: m.status || 'upcoming',
-    })),
+    milestones: (project.milestones || []).map((m) => serializeProjectMilestone(m)),
     links: project.links || [],
     contributors: [],
     author: author
@@ -176,22 +193,47 @@ export async function addProjectMilestone(req, res) {
     status: milestone.status || 'upcoming',
     progress: milestone.progress ?? 0,
   })
+  recalculateProjectProgressFromMilestones(project)
   await project.save()
 
   const created = project.milestones[project.milestones.length - 1]
   return res.status(201).json({
-    milestone: {
-      title: created.title || '',
-      description: created.description || '',
-      status: created.status || 'upcoming',
-      progress: created.progress ?? 0,
-    },
-    milestones: project.milestones.map((m) => ({
-      title: m.title || '',
-      description: m.description || '',
-      status: m.status || 'upcoming',
-      progress: m.progress ?? 0,
-    })),
+    milestone: serializeProjectMilestone(created),
+    milestones: project.milestones.map((m) => serializeProjectMilestone(m)),
+    progress: project.progress ?? 0,
+  })
+}
+
+// PATCH /api/projects/:id/milestones/:milestoneId/complete
+export async function completeProjectMilestone(req, res) {
+  const { id, milestoneId } = req.params
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid project id' })
+  }
+  if (!mongoose.Types.ObjectId.isValid(milestoneId)) {
+    return res.status(400).json({ message: 'Invalid milestone id' })
+  }
+
+  const project = await Project.findById(id)
+  if (!project) return res.status(404).json({ message: 'Project not found' })
+  if (!canManageProject(project, req.user._id)) {
+    return res.status(403).json({ message: 'Only the project owner can complete milestones' })
+  }
+
+  const milestone = (project.milestones || []).find((entry) => toId(entry._id) === milestoneId)
+  if (!milestone) {
+    return res.status(404).json({ message: 'Milestone not found' })
+  }
+
+  milestone.status = 'completed'
+  milestone.progress = 100
+  recalculateProjectProgressFromMilestones(project)
+  await project.save()
+
+  return res.json({
+    milestone: serializeProjectMilestone(milestone),
+    milestones: (project.milestones || []).map((entry) => serializeProjectMilestone(entry)),
+    progress: project.progress ?? 0,
   })
 }
 
@@ -316,6 +358,9 @@ export async function updateProject(req, res) {
 
   const patch = req.validatedProjectUpdate || {}
   Object.assign(project, patch)
+  if (patch.milestones !== undefined) {
+    recalculateProjectProgressFromMilestones(project)
+  }
   await project.save()
   await project.populate('author', 'name handle avatar')
 

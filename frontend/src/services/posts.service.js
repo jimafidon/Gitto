@@ -15,6 +15,7 @@ export const postsService = {
   save:         (id)             => api.post(`/api/posts/${id}/save`).then(r => r.data),
   unsave:       (id)             => api.delete(`/api/posts/${id}/save`).then(r => r.data),
   // Comment operations
+  getComments:  (id)             => api.get(`/api/posts/${id}/comments`).then(r => r.data),
   addComment:   (id, body)       => api.post(`/api/posts/${id}/comments`, { body }).then(r => r.data),
   deleteComment:(id, commentId)  => api.delete(`/api/posts/${id}/comments/${commentId}`).then(r => r.data),
 }

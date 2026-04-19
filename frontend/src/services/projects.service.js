@@ -15,6 +15,7 @@ export const projectsService = {
   unfollow:    (id)      => api.delete(`/api/projects/${id}/follow`).then(r => r.data),
   // Milestones and activity surfaces
   addMilestone:(id, data)=> api.post(`/api/projects/${id}/milestones`, data).then(r => r.data),
+  completeMilestone:(id, milestoneId)=> api.patch(`/api/projects/${id}/milestones/${milestoneId}/complete`).then(r => r.data),
   getUpdates:  (id)      => api.get(`/api/projects/${id}/updates`).then(r => r.data),
   getComments: (id)      => api.get(`/api/projects/${id}/comments`).then(r => r.data),
   addComment:  (id, body)=> api.post(`/api/projects/${id}/comments`, { body }).then(r => r.data),

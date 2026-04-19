@@ -5,6 +5,7 @@ import {
   createPost,
   deletePostComment,
   getFeed,
+  getPostComments,
   getPostById,
   getSavedPosts,
   likePost,
@@ -28,6 +29,7 @@ router.post('/:id/like', requireAuth, likePost)
 router.delete('/:id/like', requireAuth, unlikePost)
 router.post('/:id/save', requireAuth, savePost)
 router.delete('/:id/save', requireAuth, unsavePost)
+router.get('/:id/comments', optionalAuth, getPostComments)
 router.post('/:id/comments', requireAuth, validatePostComment, addPostComment)
 router.delete('/:id/comments/:commentId', requireAuth, deletePostComment)
 

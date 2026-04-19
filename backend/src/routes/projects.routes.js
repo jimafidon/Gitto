@@ -2,6 +2,7 @@ import express from 'express'
 import { optionalAuth, requireAuth } from '../middleware/auth.middleware.js'
 import {
   addProjectComment,
+  completeProjectMilestone,
   addProjectMilestone,
   createProject,
   followProject,
@@ -36,6 +37,7 @@ router.delete('/:id/star', requireAuth, unstarProject)
 router.post('/:id/follow', requireAuth, followProject)
 router.delete('/:id/follow', requireAuth, unfollowProject)
 router.post('/:id/milestones', requireAuth, validateAddProjectMilestone, addProjectMilestone)
+router.patch('/:id/milestones/:milestoneId/complete', requireAuth, completeProjectMilestone)
 router.get('/:id/updates', optionalAuth, getProjectUpdates)
 router.get('/:id/comments', optionalAuth, getProjectComments)
 router.post('/:id/comments', requireAuth, validateProjectComment, addProjectComment)

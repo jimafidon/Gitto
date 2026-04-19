@@ -10,8 +10,7 @@ const milestoneSchema = new mongoose.Schema(
       default: 'upcoming',
     },
     progress: { type: Number, min: 0, max: 100, default: 0 },
-  },
-  { _id: false }
+  }
 )
 
 const projectCommentSchema = new mongoose.Schema(

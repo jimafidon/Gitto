@@ -3,13 +3,23 @@ import api from './api'
 
 export const authService = {
   async register({ name, handle, email, password }) {
-    const { data } = await api.post('/api/auth/register', { name, handle, email, password })
+    const payload = {
+      name: String(name || '').trim(),
+      handle: String(handle || '').trim(),
+      email: String(email || '').trim().toLowerCase(),
+      password,
+    }
+    const { data } = await api.post('/api/auth/register', payload)
     localStorage.setItem('gitto_token', data.token)
     return data
   },
 
   async login({ email, password }) {
-    const { data } = await api.post('/api/auth/login', { email, password })
+    const payload = {
+      email: String(email || '').trim().toLowerCase(),
+      password,
+    }
+    const { data } = await api.post('/api/auth/login', payload)
     localStorage.setItem('gitto_token', data.token)
     return data
   },

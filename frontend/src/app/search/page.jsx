@@ -111,7 +111,7 @@ export default function SearchPage() {
         {!loading && query && users.length === 0 && projects.length === 0 && (
           <div className="empty-state">
             <div className="icon">🔍</div>
-            <h3>No results for "{query}"</h3>
+            <h3>No results for &quot;{query}&quot;</h3>
             <p>Try a different search term or filter.</p>
           </div>
         )}

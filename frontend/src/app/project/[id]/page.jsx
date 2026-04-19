@@ -1,12 +1,20 @@
 'use client'
 // frontend/src/app/project/[id]/page.jsx
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { projectsService } from '@/services/projects.service'
 import { postsService } from '@/services/posts.service'
 import Avatar from '@/components/Avatar'
 import MilestoneTimeline from '@/components/MilestoneTimeline'
+
+const VALID_PROJECT_TABS = new Set(['overview', 'milestones', 'updates', 'discussion'])
+
+function normalizeProjectTab(value) {
+  const tab = String(value || '').trim().toLowerCase()
+  return VALID_PROJECT_TABS.has(tab) ? tab : 'overview'
+}
 
 function extractErrorInfo(error, fallback = 'Something went wrong. Please try again.') {
   // Normalize axios/network errors to a shape the UI can reuse across tabs/actions.
@@ -50,25 +58,32 @@ function pageLoadErrorMeta(errorInfo) {
 
 export default function ProjectDetailPage({ params }) {
   const { id } = use(params)
+  const searchParams = useSearchParams()
   const { user } = useAuth()
+  const requestedTab = normalizeProjectTab(searchParams.get('tab'))
+  const targetUpdateId = String(searchParams.get('updateId') || '').trim()
+  const editDenied = searchParams.get('editDenied') === '1'
+  const editSaved = searchParams.get('editSaved') === '1'
   const [project, setProject] = useState(null)
-  const [tab, setTab]         = useState('overview')
+  const [tab, setTab]         = useState(requestedTab)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
   const [starred, setStarred] = useState(false)
   const [followed, setFollowed] = useState(false)
   const [milestoneDraft, setMilestoneDraft] = useState({ title: '', description: '' })
   const [addingMilestone, setAddingMilestone] = useState(false)
+  const [milestonePending, setMilestonePending] = useState({})
   const [shareLabel, setShareLabel] = useState('🔗 Share')
   const [headerActionPending, setHeaderActionPending] = useState({ star: false, follow: false })
   const [headerActionError, setHeaderActionError] = useState('')
   const [milestoneError, setMilestoneError] = useState('')
+  const [milestoneActionError, setMilestoneActionError] = useState('')
   const [shareError, setShareError] = useState('')
   const [authNotice, setAuthNotice] = useState('')
 
   const isOwner = project?.author?._id === user?._id
 
-  async function loadProject() {
+  const loadProject = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
     try {
@@ -84,12 +99,16 @@ export default function ProjectDetailPage({ params }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     // Reload when URL id changes or auth context swaps users.
     loadProject()
-  }, [id, user?._id])
+  }, [loadProject])
+
+  useEffect(() => {
+    setTab(requestedTab)
+  }, [requestedTab, id])
 
   useEffect(() => {
     function onAuthExpired(event) {
@@ -188,7 +207,11 @@ export default function ProjectDetailPage({ params }) {
         title: milestoneDraft.title,
         description: milestoneDraft.description,
       })
-      setProject(p => ({ ...p, milestones: data.milestones || p.milestones }))
+      setProject(p => ({
+        ...p,
+        milestones: data.milestones || p.milestones,
+        progress: data.progress ?? p.progress,
+      }))
       setMilestoneDraft({ title: '', description: '' })
     } catch (error) {
       const info = extractErrorInfo(error, 'Unable to add milestone right now.')
@@ -199,6 +222,30 @@ export default function ProjectDetailPage({ params }) {
       }
     } finally {
       setAddingMilestone(false)
+    }
+  }
+
+  async function handleCompleteMilestone(milestone) {
+    const milestoneId = String(milestone?._id || '')
+    if (!milestoneId || milestone?.status === 'completed') return
+    setMilestoneActionError('')
+    setMilestonePending((map) => ({ ...map, [milestoneId]: true }))
+    try {
+      const data = await projectsService.completeMilestone(id, milestoneId)
+      setProject((current) => ({
+        ...current,
+        milestones: data.milestones || current.milestones,
+        progress: data.progress ?? current.progress,
+      }))
+    } catch (error) {
+      const info = extractErrorInfo(error, 'Unable to complete milestone right now.')
+      if (info.status === 403) {
+        setMilestoneActionError('Only the project owner can complete milestones.')
+      } else {
+        setMilestoneActionError(info.message)
+      }
+    } finally {
+      setMilestonePending((map) => ({ ...map, [milestoneId]: false }))
     }
   }
 
@@ -235,7 +282,7 @@ export default function ProjectDetailPage({ params }) {
       <div className="empty-state" style={{ marginTop: 80 }}>
         <div className="icon">📁</div>
         <h3>Project not found</h3>
-        <p>This project doesn't exist or has been removed.</p>
+        <p>This project doesn&apos;t exist or has been removed.</p>
         <Link href="/feed" className="btn btn-ghost" style={{ marginTop: 16 }}>Back to feed</Link>
       </div>
     </div>
@@ -246,9 +293,11 @@ export default function ProjectDetailPage({ params }) {
   return (
     <div className="page fade-in">
       <div className="project-detail">
-        {authNotice && (
+        {(authNotice || editDenied || editSaved) && (
           <div className="card" style={{ marginBottom: 12, borderColor: 'var(--warning, #d97706)' }}>
-            <div style={{ fontSize: 13, color: 'var(--warning, #d97706)' }}>{authNotice}</div>
+            <div style={{ fontSize: 13, color: 'var(--warning, #d97706)' }}>
+              {authNotice || (editDenied ? 'Only the project owner can access the edit page.' : 'Project changes saved successfully.')}
+            </div>
           </div>
         )}
         <Link href={`/profile/${project.author?.handle}`} className="pd-back">← Back to Profile</Link>
@@ -362,6 +411,46 @@ export default function ProjectDetailPage({ params }) {
           {tab === 'milestones' && (
             <div style={{ maxWidth: 600 }}>
               <MilestoneTimeline milestones={project.milestones || []} detailed />
+              {isOwner && (project.milestones || []).length > 0 && (
+                <div className="card" style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
+                    Milestone actions
+                  </div>
+                  <div style={{ display: 'grid', gap: 8 }}>
+                    {(project.milestones || []).map((milestone, index) => {
+                      const milestoneId = String(milestone?._id || '')
+                      const isCompleted = milestone?.status === 'completed'
+                      const isPending = Boolean(milestonePending[milestoneId])
+                      return (
+                        <div key={milestoneId || `${milestone?.title || 'milestone'}-${index}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                          <div>
+                            <div style={{ fontSize: 14, fontWeight: 600 }}>{milestone?.title || 'Untitled milestone'}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text3)' }}>
+                              Status: {isCompleted ? 'Completed' : 'In progress'}
+                            </div>
+                          </div>
+                          {isCompleted ? (
+                            <span className="badge badge-teal">Completed</span>
+                          ) : (
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => handleCompleteMilestone(milestone)}
+                              disabled={!milestoneId || isPending}
+                            >
+                              {isPending ? 'Saving...' : 'Mark complete'}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {milestoneActionError && (
+                    <div style={{ marginTop: 10, fontSize: 13, color: 'var(--danger, #d33)' }}>
+                      {milestoneActionError}
+                    </div>
+                  )}
+                </div>
+              )}
               {isOwner && (
                 <div className="card" style={{ marginTop: 12 }}>
                   <form onSubmit={handleAddMilestone}>
@@ -395,7 +484,7 @@ export default function ProjectDetailPage({ params }) {
             </div>
           )}
 
-          {tab === 'updates' && <UpdatesTab projectId={id} isOwner={isOwner} />}
+          {tab === 'updates' && <UpdatesTab projectId={id} isOwner={isOwner} targetUpdateId={targetUpdateId} />}
           {tab === 'discussion' && <DiscussionTab projectId={id} />}
         </div>
       </div>
@@ -403,18 +492,28 @@ export default function ProjectDetailPage({ params }) {
   )
 }
 
-function UpdatesTab({ projectId, isOwner }) {
+function UpdatesTab({ projectId, isOwner, targetUpdateId = '' }) {
+  const { user } = useAuth()
+  const updateRefs = useRef({})
   const [updates, setUpdates] = useState([])
   const [loading, setLoading] = useState(true)
   const [updatesError, setUpdatesError] = useState('')
   const [commentDrafts, setCommentDrafts] = useState({})
+  const [updateComments, setUpdateComments] = useState({})
+  const [commentsLoading, setCommentsLoading] = useState({})
+  const [loadedCommentIds, setLoadedCommentIds] = useState({})
   const [activeCommentId, setActiveCommentId] = useState('')
+  const [highlightedUpdateId, setHighlightedUpdateId] = useState('')
   const [updateActionErrors, setUpdateActionErrors] = useState({})
   const [updatePending, setUpdatePending] = useState({})
 
-  async function loadUpdates() {
+  const loadUpdates = useCallback(async () => {
     setLoading(true)
     setUpdatesError('')
+    setUpdateComments({})
+    setLoadedCommentIds({})
+    setActiveCommentId('')
+    setUpdateActionErrors({})
     try {
       const data = await projectsService.getUpdates(projectId)
       setUpdates(data.updates || [])
@@ -425,12 +524,55 @@ function UpdatesTab({ projectId, isOwner }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId])
 
   useEffect(() => {
     // Keep updates scoped to currently viewed project.
     loadUpdates()
-  }, [projectId])
+  }, [loadUpdates])
+
+  const loadUpdateComments = useCallback(async (updateId) => {
+    if (!updateId || loadedCommentIds[updateId]) return
+    setCommentsLoading((map) => ({ ...map, [updateId]: true }))
+    try {
+      const data = await postsService.getComments(updateId)
+      setUpdateComments((map) => ({ ...map, [updateId]: data.comments || [] }))
+      setLoadedCommentIds((map) => ({ ...map, [updateId]: true }))
+    } catch (error) {
+      const info = extractErrorInfo(error, 'Unable to load comments for this update.')
+      setUpdateActionErrors((map) => ({ ...map, [updateId]: info.message }))
+    } finally {
+      setCommentsLoading((map) => ({ ...map, [updateId]: false }))
+    }
+  }, [loadedCommentIds])
+
+  useEffect(() => {
+    if (!targetUpdateId || loading || updates.length === 0) return
+
+    const targetExists = updates.some((update) => update._id === targetUpdateId)
+    if (!targetExists) return
+
+    setActiveCommentId(targetUpdateId)
+    loadUpdateComments(targetUpdateId)
+    setHighlightedUpdateId(targetUpdateId)
+
+    const targetNode = updateRefs.current[targetUpdateId]
+    if (targetNode) {
+      targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+
+    const timeoutId = setTimeout(() => {
+      setHighlightedUpdateId((current) => (current === targetUpdateId ? '' : current))
+    }, 2200)
+
+    return () => clearTimeout(timeoutId)
+  }, [targetUpdateId, loading, updates, loadUpdateComments])
+
+  function handleToggleComment(updateId) {
+    const nextId = activeCommentId === updateId ? '' : updateId
+    setActiveCommentId(nextId)
+    if (nextId) loadUpdateComments(nextId)
+  }
 
   async function handleLike(update) {
     if (!update?._id) return
@@ -469,8 +611,14 @@ function UpdatesTab({ projectId, isOwner }) {
       setUpdates(list => list.map(item => (
         item._id === update._id ? { ...item, commentsCount: data.commentsCount ?? (item.commentsCount || 0) + 1 } : item
       )))
+      if (data.comment) {
+        setUpdateComments((map) => ({
+          ...map,
+          [update._id]: [...(map[update._id] || []), data.comment],
+        }))
+        setLoadedCommentIds((map) => ({ ...map, [update._id]: true }))
+      }
       setCommentDrafts((drafts) => ({ ...drafts, [update._id]: '' }))
-      setActiveCommentId('')
     } catch (error) {
       const info = extractErrorInfo(error, 'Unable to post update comment right now.')
       setUpdateActionErrors((map) => ({ ...map, [update._id]: info.message }))
@@ -493,13 +641,29 @@ function UpdatesTab({ projectId, isOwner }) {
       <div className="icon">📝</div>
       <h3>No updates yet</h3>
       <p>{isOwner ? 'Share your first progress update.' : 'No updates have been posted yet.'}</p>
+      {isOwner && (
+        <Link href={`/feed?projectId=${projectId}`} className="btn btn-primary" style={{ marginTop: 12 }}>
+          Post the first update
+        </Link>
+      )}
     </div>
   )
 
   return (
     <div>
       {updates.map((u, i) => (
-        <div key={i} className="card update-card">
+        <div
+          key={u._id || i}
+          className="card update-card"
+          ref={(node) => {
+            if (node && u._id) updateRefs.current[u._id] = node
+          }}
+          style={
+            highlightedUpdateId === u._id
+              ? { borderColor: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent)', transition: 'box-shadow 0.25s ease, border-color 0.25s ease' }
+              : undefined
+          }
+        >
           <div className="update-header">
             <Avatar name={u.author?.name} src={u.author?.avatar} size={32} textSize={11} />
             <div>
@@ -518,24 +682,54 @@ function UpdatesTab({ projectId, isOwner }) {
             <button className="action-btn" onClick={() => handleLike(u)} disabled={Boolean(updatePending[u._id])}>
               {u.likedByMe ? '❤️' : '🤍'} Like ({u.likesCount || 0})
             </button>
-            <button className="action-btn" onClick={() => setActiveCommentId((prev) => (prev === u._id ? '' : u._id))} disabled={Boolean(updatePending[u._id])}>
+            <button className="action-btn" onClick={() => handleToggleComment(u._id)} disabled={Boolean(updatePending[u._id])}>
               💬 Comment ({u.commentsCount || 0})
             </button>
           </div>
           {activeCommentId === u._id && (
-            <form onSubmit={(e) => handleSubmitUpdateComment(e, u)} style={{ marginTop: 10 }}>
-              <textarea
-                className="compose-input"
-                rows={2}
-                placeholder="Comment on this update..."
-                value={commentDrafts[u._id] || ''}
-                onChange={(e) => setCommentDrafts((drafts) => ({ ...drafts, [u._id]: e.target.value }))}
-                style={{ marginBottom: 8 }}
-              />
-              <button className="btn btn-primary btn-sm" type="submit" disabled={Boolean(updatePending[u._id]) || !String(commentDrafts[u._id] || '').trim()}>
-                Post Comment
-              </button>
-            </form>
+            <div style={{ marginTop: 10 }}>
+              {commentsLoading[u._id] ? (
+                <div className="skeleton" style={{ height: 48, borderRadius: 10, marginBottom: 8 }} />
+              ) : (
+                <div style={{ display: 'grid', gap: 8, marginBottom: 10 }}>
+                  {(updateComments[u._id] || []).map((comment) => (
+                    <div key={comment._id} className="card" style={{ padding: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <Avatar name={comment.author?.name} src={comment.author?.avatar} size={24} textSize={9} />
+                        {comment.author?.handle ? (
+                          <Link href={`/profile/${comment.author.handle}`} style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
+                            {comment.author?.name || 'Deleted user'}
+                          </Link>
+                        ) : (
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)' }}>{comment.author?.name || 'Deleted user'}</span>
+                        )}
+                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{timeAgo(comment.createdAt)}</span>
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.5 }}>{comment.body}</div>
+                    </div>
+                  ))}
+                  {(updateComments[u._id] || []).length === 0 && (
+                    <div style={{ fontSize: 13, color: 'var(--text3)' }}>No comments yet.</div>
+                  )}
+                </div>
+              )}
+
+              {user && (
+                <form onSubmit={(e) => handleSubmitUpdateComment(e, u)}>
+                  <textarea
+                    className="compose-input"
+                    rows={2}
+                    placeholder="Comment on this update..."
+                    value={commentDrafts[u._id] || ''}
+                    onChange={(e) => setCommentDrafts((drafts) => ({ ...drafts, [u._id]: e.target.value }))}
+                    style={{ marginBottom: 8 }}
+                  />
+                  <button className="btn btn-primary btn-sm" type="submit" disabled={Boolean(updatePending[u._id]) || !String(commentDrafts[u._id] || '').trim()}>
+                    Post Comment
+                  </button>
+                </form>
+              )}
+            </div>
           )}
           {updateActionErrors[u._id] && (
             <div style={{ marginTop: 8, fontSize: 13, color: 'var(--danger, #d33)' }}>
@@ -557,7 +751,7 @@ function DiscussionTab({ projectId }) {
   const [submitError, setSubmitError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  async function loadComments() {
+  const loadComments = useCallback(async () => {
     setLoading(true)
     setCommentsError('')
     try {
@@ -570,12 +764,12 @@ function DiscussionTab({ projectId }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [projectId])
 
   useEffect(() => {
     // Reload discussion when navigating between different project detail pages.
     loadComments()
-  }, [projectId])
+  }, [loadComments])
 
   async function handleComment(e) {
     e.preventDefault()

@@ -61,6 +61,8 @@ export default function PostCard({ post, currentUserId, onLikeChange, onSaveChan
   }
 
   const isOwner = currentUserId === post.author?._id
+  const projectId = post.project?._id
+  const commentHref = projectId ? `/project/${projectId}?tab=updates&updateId=${post._id}` : ''
 
   return (
     <div className="card post-card">
@@ -113,7 +115,15 @@ export default function PostCard({ post, currentUserId, onLikeChange, onSaveChan
         <button className={`action-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
           {liked ? '❤️' : '🤍'} {likesCount}
         </button>
-        <button className="action-btn">💬 {post.commentsCount || 0}</button>
+        {commentHref ? (
+          <Link href={commentHref} className="action-btn" style={{ textDecoration: 'none' }}>
+            💬 {post.commentsCount || 0}
+          </Link>
+        ) : (
+          <button className="action-btn" disabled title="Project not available for this post">
+            💬 {post.commentsCount || 0}
+          </button>
+        )}
         <button className="action-btn">🔁 Share</button>
         <button
           className={`action-btn ${bookmarked ? 'bookmarked' : ''}`}

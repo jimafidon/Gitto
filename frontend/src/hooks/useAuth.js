@@ -24,7 +24,10 @@ function normalizeUser(u) {
 // Wrap your root layout with this provider
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return Boolean(localStorage.getItem('gitto_token'))
+  })
 
   // On mount, check if there's a stored token and fetch the current user
   useEffect(() => {
@@ -34,8 +37,6 @@ export function AuthProvider({ children }) {
         .then(u => setUser(normalizeUser(u)))
         .catch(() => localStorage.removeItem('gitto_token'))
         .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
     }
   }, [])
 

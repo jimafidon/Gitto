@@ -24,9 +24,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+    const url = String(error.config?.url || '')
+    const isLoginOrRegisterRequest = url.includes('/api/auth/login') || url.includes('/api/auth/register')
+
+    // Only auto-expire sessions when an existing authenticated request is rejected.
+    if (status === 401 && !isLoginOrRegisterRequest) {
       // Token expired — notify UI, clear storage, then redirect to login.
       if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('gitto_token')
+        if (!token) return Promise.reject(error)
+
         window.dispatchEvent(new CustomEvent('gitto:auth-expired', {
           detail: { message: 'Session expired. Redirecting to login...' },
         }))

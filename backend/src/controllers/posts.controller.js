@@ -7,6 +7,22 @@ function isOwner(entityUserId, currentUserId) {
   return String(entityUserId || '') === String(currentUserId || '')
 }
 
+function serializePostComment(comment) {
+  return {
+    _id: comment._id,
+    body: comment.body || '',
+    createdAt: comment.createdAt,
+    author: comment.author
+      ? {
+          _id: comment.author._id || comment.author,
+          name: comment.author.name || '',
+          handle: comment.author.handle || '',
+          avatar: comment.author.avatar || '',
+        }
+      : null,
+  }
+}
+
 export async function getFeed(req, res) {
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1)
   const limit = 20
@@ -158,21 +174,23 @@ export async function addPostComment(req, res) {
 
   const comment = post.comments[post.comments.length - 1]
   return res.status(201).json({
-    comment: {
-      _id: comment._id,
-      body: comment.body || '',
-      createdAt: comment.createdAt,
-      author: comment.author
-        ? {
-            _id: comment.author._id,
-            name: comment.author.name || '',
-            handle: comment.author.handle || '',
-            avatar: comment.author.avatar || '',
-          }
-        : null,
-    },
+    comment: serializePostComment(comment),
     commentsCount: post.comments.length,
   })
+}
+
+export async function getPostComments(req, res) {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: 'Invalid post id' })
+  }
+
+  const post = await Post.findById(req.params.id)
+  if (!post) return res.status(404).json({ message: 'Post not found' })
+
+  await post.populate('comments.author', 'name handle avatar')
+  const comments = (post.comments || []).map((comment) => serializePostComment(comment))
+
+  return res.json({ comments })
 }
 
 export async function getPostById(req, res) {

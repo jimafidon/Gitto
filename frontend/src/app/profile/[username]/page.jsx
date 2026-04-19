@@ -1,4 +1,6 @@
 'use client'
+//Temporary file for testing the profile page
+
 // frontend/src/app/profile/[username]/page.jsx
 import { useState, useEffect } from 'react'
 import { use } from 'react'
@@ -24,7 +26,7 @@ export default function ProfilePage({ params }) {
         setFollowing(data.user.followers?.includes(currentUser?._id))
       })
       .finally(() => setLoading(false))
-  }, [username])
+  }, [username, currentUser?._id])
 
   async function handleFollow() {
     if (following) {
@@ -53,7 +55,7 @@ export default function ProfilePage({ params }) {
       <div className="empty-state" style={{ marginTop: 80 }}>
         <div className="icon">👤</div>
         <h3>User not found</h3>
-        <p>This profile doesn't exist or has been removed.</p>
+        <p>This profile doesn&apos;t exist or has been removed.</p>
       </div>
     </div>
   )

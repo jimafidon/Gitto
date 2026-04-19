@@ -2,6 +2,7 @@
 // frontend/src/app/feed/page.jsx
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { postsService } from '@/services/posts.service'
 import { usersService } from '@/services/users.service'
@@ -9,6 +10,8 @@ import PostCard from '@/components/PostCard'
 import Avatar from '@/components/Avatar'
 
 export default function FeedPage() {
+  const searchParams = useSearchParams()
+  const requestedProjectId = String(searchParams.get('projectId') || '').trim()
   const { user, loading: authLoading } = useAuth()
   const [posts, setPosts]           = useState([])
   const [suggested, setSuggested]   = useState([])
@@ -49,8 +52,10 @@ export default function FeedPage() {
         ])
         setPosts(feedData.posts || [])
         setSuggested((suggestedData.users || []).filter((u) => u._id !== user._id))
-        setMyProjects(projectsData.projects || [])
-        setSelectedProjectId((projectsData.projects || [])[0]?._id || '')
+        const projects = projectsData.projects || []
+        setMyProjects(projects)
+        const requestedProject = projects.find((project) => project._id === requestedProjectId)
+        setSelectedProjectId(requestedProject?._id || projects[0]?._id || '')
       } catch (err) {
         setError(err.response?.data?.message || 'Unable to load feed right now.')
       } finally {
@@ -58,7 +63,7 @@ export default function FeedPage() {
       }
     }
     load()
-  }, [authLoading, user?._id])
+  }, [authLoading, user?._id, requestedProjectId])
 
   useEffect(() => {
     // Reset milestone selection if user changes project or milestone list changes.
