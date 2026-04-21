@@ -112,10 +112,6 @@ UserSchema.virtual('followingCount').get(function () {
   return this.following.length
 })
 
-// ── Indexes ───────────────────────────────────────────────────────────────────
-UserSchema.index({ handle: 1 })
-UserSchema.index({ email: 1 })
-
 // ── Pre-save: hash password ───────────────────────────────────────────────────
 // Only runs when the password field has been changed (not on every save)
 UserSchema.pre('save', async function () {

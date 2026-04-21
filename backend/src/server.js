@@ -7,15 +7,15 @@ import { configurePassport } from './lib/passport.js'
 import passport             from 'passport'
 
 import router    from './routes/auth.routes.js'
-// import postsRouter   from './routes/posts.routes.js'
-// import usersRouter   from './routes/users.routes.js'
-// import projectRouter from './routes/projects.routes.js'
+import postsRouter   from './routes/posts.routes.js'
+import usersRouter   from './routes/users.routes.js'
+import projectRouter from './routes/projects.routes.js'
 
 import { notFound, errorHandler } from './middleware/error.middleware.js'
 
 dotenv.config()
 
-const app  = express()
+export const app = express()
 const PORT = process.env.PORT || 3001
 configurePassport(passport)
 
@@ -26,9 +26,9 @@ app.use(express.json())
 app.use(passport.initialize())
 
 app.use('/api/auth',     router)
-// app.use('/api/posts',    postsRouter)
-// app.use('/api/users',    usersRouter)
-// app.use('/api/projects', projectRouter)
+app.use('/api/posts',    postsRouter)
+app.use('/api/users',    usersRouter)
+app.use('/api/projects', projectRouter)
 
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))
 
@@ -43,7 +43,17 @@ app.use(errorHandler)
 //   })
 // }
 
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`))
-})
- 
+export function startServer() {
+  return connectDB().then(() =>
+    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`))
+  )
+}
+
+const isTestEnv =
+  process.env.NODE_ENV === 'test' ||
+  process.env.VITEST === 'true' ||
+  process.env.VITEST === '1'
+
+if (!isTestEnv) {
+  startServer()
+}

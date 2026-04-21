@@ -11,7 +11,8 @@ export async function requireAuth(req, res, next) {
 
     const token   = authHeader.split(' ')[1]
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const user    = await User.findById(decoded.id).select('-password')
+    const userId  = decoded.id || decoded.sub
+    const user    = await User.findById(userId).select('-password')
 
     if (!user) return res.status(401).json({ message: 'User no longer exists' })
 
@@ -35,7 +36,8 @@ export async function optionalAuth(req, res, next) {
     if (authHeader?.startsWith('Bearer ')) {
       const token   = authHeader.split(' ')[1]
       const decoded = jwt.verify(token, process.env.JWT_SECRET)
-      const user    = await User.findById(decoded.id).select('-password')
+      const userId  = decoded.id || decoded.sub
+      const user    = await User.findById(userId).select('-password')
       if (user) req.user = user
     }
   } catch { /* silently ignore */ }

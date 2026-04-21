@@ -24,6 +24,7 @@ export default function NewProjectPage() {
   const [loading, setLoading] = useState(false)
 
   function setField(key, value) {
+    // Shared updater keeps form inputs controlled without repeating object spread logic.
     setForm(f => ({ ...f, [key]: value }))
   }
 
@@ -49,6 +50,7 @@ export default function NewProjectPage() {
     const cleanMilestones = milestones.filter(m => m.title.trim())
 
     // Convert comma-separated tags string → array
+    // Normalize tags to match backend expectations and avoid duplicate hashtag prefixes.
     const tags = form.tags
       .split(',')
       .map(t => t.trim().replace(/^#/, '').toLowerCase())

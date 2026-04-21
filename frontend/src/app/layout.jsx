@@ -6,9 +6,9 @@ import './global.css'
 
 
 export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body className="bg-[#0d0d0f] text-[#f0f0f2] min-h-screen">
+  return (   
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-[#0d0d0f] text-[#f0f0f2] min-h-screen" suppressHydrationWarning>
         <SessionProvider>
         <AuthProvider>
           <Nav />

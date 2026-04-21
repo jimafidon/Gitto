@@ -1,6 +1,7 @@
 'use client'
 // frontend/src/components/PostCard.jsx
 import { useState } from 'react'
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { postsService } from '@/services/posts.service'
 import Avatar from './Avatar'
@@ -14,10 +15,16 @@ function timeAgo(date) {
   return `${Math.floor(diff / 86400)}d ago`
 }
 
-export default function PostCard({ post, currentUserId, onLikeChange }) {
+export default function PostCard({ post, currentUserId, onLikeChange, onSaveChange }) {
   const [liked,      setLiked]      = useState(post.likedByMe || false)
   const [likesCount, setLikesCount] = useState(post.likesCount || 0)
-  const [bookmarked, setBookmarked] = useState(false)
+  const [bookmarked, setBookmarked] = useState(post.savedByMe || false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
+  useEffect(() => {
+    setBookmarked(Boolean(post.savedByMe))
+  }, [post.savedByMe])
 
   async function handleLike() {
     const newLiked = !liked
@@ -35,7 +42,27 @@ export default function PostCard({ post, currentUserId, onLikeChange }) {
     }
   }
 
+  async function handleSave() {
+    if (!post?._id || saving) return
+    const nextSaved = !bookmarked
+    setSaveError('')
+    setSaving(true)
+    setBookmarked(nextSaved)
+    try {
+      if (nextSaved) await postsService.save(post._id)
+      else await postsService.unsave(post._id)
+      onSaveChange?.(post._id, nextSaved)
+    } catch (err) {
+      setBookmarked(!nextSaved)
+      setSaveError(err.response?.data?.message || 'Unable to update saved state right now.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const isOwner = currentUserId === post.author?._id
+  const projectId = post.project?._id
+  const commentHref = projectId ? `/project/${projectId}?tab=updates&updateId=${post._id}` : ''
 
   return (
     <div className="card post-card">
@@ -88,16 +115,30 @@ export default function PostCard({ post, currentUserId, onLikeChange }) {
         <button className={`action-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
           {liked ? '❤️' : '🤍'} {likesCount}
         </button>
-        <button className="action-btn">💬 {post.commentsCount || 0}</button>
+        {commentHref ? (
+          <Link href={commentHref} className="action-btn" style={{ textDecoration: 'none' }}>
+            💬 {post.commentsCount || 0}
+          </Link>
+        ) : (
+          <button className="action-btn" disabled title="Project not available for this post">
+            💬 {post.commentsCount || 0}
+          </button>
+        )}
         <button className="action-btn">🔁 Share</button>
         <button
           className={`action-btn ${bookmarked ? 'bookmarked' : ''}`}
           style={{ marginLeft: 'auto' }}
-          onClick={() => setBookmarked(b => !b)}
+          onClick={handleSave}
+          disabled={saving}
         >
-          🔖
+          {saving ? '⏳' : '🔖'}
         </button>
       </div>
+      {saveError && (
+        <div style={{ marginTop: 8, fontSize: 12, color: 'var(--danger, #d33)' }}>
+          {saveError}
+        </div>
+      )}
     </div>
   )
 }

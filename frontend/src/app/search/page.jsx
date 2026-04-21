@@ -14,9 +14,11 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
 
   const search = useCallback(async () => {
+    // Empty query resets result panes and avoids unnecessary backend requests.
     if (!query.trim()) { setUsers([]); setProjects([]); return }
     setLoading(true)
     try {
+      // Fetch only the result types relevant to active filter for lower request volume.
       const [u, p] = await Promise.all([
         filter !== 'projects' ? usersService.search(query)    : Promise.resolve({ users: [] }),
         filter !== 'people'   ? projectsService.search(query) : Promise.resolve({ projects: [] }),
@@ -29,6 +31,7 @@ export default function SearchPage() {
   }, [query, filter])
 
   useEffect(() => {
+    // Debounce keyboard input so search runs after user pauses typing.
     const t = setTimeout(search, 400)
     return () => clearTimeout(t)
   }, [search])
@@ -108,7 +111,7 @@ export default function SearchPage() {
         {!loading && query && users.length === 0 && projects.length === 0 && (
           <div className="empty-state">
             <div className="icon">🔍</div>
-            <h3>No results for "{query}"</h3>
+            <h3>No results for &quot;{query}&quot;</h3>
             <p>Try a different search term or filter.</p>
           </div>
         )}
