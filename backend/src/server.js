@@ -5,6 +5,7 @@ import dotenv   from 'dotenv'
 import { connectDB } from './lib/db.js'
 import { configurePassport } from './lib/passport.js'
 import passport             from 'passport'
+import dns from "dns"
 
 import router    from './routes/auth.routes.js'
 import postsRouter   from './routes/posts.routes.js'
@@ -14,6 +15,8 @@ import projectRouter from './routes/projects.routes.js'
 import { notFound, errorHandler } from './middleware/error.middleware.js'
 
 dotenv.config()
+dns.setServers(["8.8.8.8", "8.8.4.4"]); //google dns
+
 
 export const app = express()
 const PORT = process.env.PORT || 3001
