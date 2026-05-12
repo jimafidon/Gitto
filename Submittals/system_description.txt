@@ -1,0 +1,162 @@
+Gitto -- System Structure
+=========================
+
+Gitto is a full-stack social platform for documenting and sharing personal projects.
+Think of it as Twitter, but for project progress -- users create projects, post updates,
+track milestones, and follow each other's work.
+
+
+HIGH-LEVEL ARCHITECTURE
+-----------------------
+
+The system is split into three layers:
+
+  1. Frontend  -- Next.js 14 web app (React 19, Tailwind CSS)
+  2. Backend   -- Node.js/Express 5 REST API
+  3. Database  -- MongoDB via Mongoose
+
+
+FRONTEND (frontend/)
+--------------------
+
+Built with the Next.js App Router. Pages are organized under src/app/:
+
+  Page             Route
+  ---------------  --------------------------
+  Home/redirect    /
+  Feed             /feed
+  Search           /search
+  Saved posts      /saved
+  Project detail   /project/[id]
+  Create project   /project/new
+  Edit project     /project/[id]/edit
+  User profile     /profile/[username]
+  Login/Signup     /login, /signup
+
+Component system lives in src/app/components/ -- Nav, PostCard, Avatar,
+MilestoneTimeline, and a set of base UI primitives (Button, Card, Badge,
+Input, ProgressBar, Emptystate).
+
+Services in src/services/ are thin Axios wrappers for each backend resource
+(auth, users, projects, posts). Custom hooks (useAuth, useFeed, useProfile)
+wrap those services and expose state to pages. Authentication is JWT-based --
+the token lives in localStorage and is attached to every request via an
+Axios interceptor.
+
+
+BACKEND (backend/)
+------------------
+
+A classic Express MVC structure under src/:
+
+  - Routes      define the URL surface (/api/auth, /api/projects, /api/posts, /api/users)
+  - Controllers hold the request/response logic for each resource
+  - Models      define the MongoDB schemas (User, Project, Post)
+  - Middleware  handles JWT auth (requireAuth/optionalAuth), request validation (Zod),
+                rate limiting, and global error handling
+
+OAuth (Google + GitHub) is supported via Passport.js on the backend, coordinated
+with NextAuth on the frontend.
+
+
+DATA MODEL
+----------
+
+Three core entities, with nested sub-documents:
+
+  User
+    - Profile fields, following/followers arrays, linked OAuth providers
+
+  Project
+    - Title, status (in_progress / paused / completed), progress %
+    - Nested Milestones and Comments
+    - Stars and followers arrays
+
+  Post (project update)
+    - Body, linked project + milestone snapshot
+    - Likes, savedBy, and comments arrays
+    - Optional URL attachments
+
+Posts and projects both belong to a User (author). Posts also belong to a Project.
+
+
+KEY API CAPABILITIES
+--------------------
+
+  - Full CRUD for projects and posts (owner-gated)
+  - Star / follow / unfollow projects
+  - Follow / unfollow users
+  - Like / save / unsave posts
+  - Nested comments on both posts and projects
+  - Milestone creation and completion
+  - Paginated feed (20 posts/page, sorted newest-first)
+  - Keyword search for projects and users
+
+Route summary:
+
+  Endpoint                                    Method        Auth          Purpose
+  ------------------------------------------  ------------  ------------  ----------------------------
+  /api/auth/register                          POST          Public        Create account
+  /api/auth/login                             POST          Public        Login, returns JWT
+  /api/auth/me                                GET           requireAuth   Get current user
+  /api/auth/google                            POST          Public        Google OAuth sign-in
+  /api/projects                               POST          requireAuth   Create project
+  /api/projects/:id                           GET           optionalAuth  Get project details
+  /api/projects/search                        GET           optionalAuth  Search projects
+  /api/projects/:id                           PATCH         requireAuth   Update project (owner)
+  /api/projects/:id                           DELETE        requireAuth   Delete project (owner)
+  /api/projects/:id/star                      POST/DELETE   requireAuth   Star / unstar
+  /api/projects/:id/follow                    POST/DELETE   requireAuth   Follow / unfollow
+  /api/projects/:id/milestones                POST          requireAuth   Add milestone
+  /api/projects/:id/milestones/:id/complete   PATCH         requireAuth   Complete milestone
+  /api/projects/:id/updates                   GET           optionalAuth  Get project updates
+  /api/projects/:id/comments                  GET/POST      optional/req  Comments
+  /api/posts                                  GET           optionalAuth  Paginated feed
+  /api/posts/saved                            GET           requireAuth   Saved posts
+  /api/posts                                  POST          requireAuth   Create update
+  /api/posts/:id                              PATCH         requireAuth   Edit post (owner)
+  /api/posts/:id                              DELETE        requireAuth   Delete post (owner)
+  /api/posts/:id/like                         POST/DELETE   requireAuth   Like / unlike
+  /api/posts/:id/save                         POST/DELETE   requireAuth   Save / unsave
+  /api/posts/:id/comments                     POST/GET      req/optional  Comments
+  /health                                     GET           Public        Health check
+
+
+DESIGN SYSTEM
+-------------
+
+Dark theme with a green/teal/red accent palette, using Syne (headings) and
+DM Sans (body). All custom design tokens are defined in tailwind.config.js.
+
+  Color role      Hex value
+  --------------  ---------
+  Background      #0d0d0f
+  Surface layers  #141417, #1c1c21, #242429
+  Border          #2a2a32
+  Accent (green)  #7fff6e
+  Accent (teal)   #4fffdf
+  Accent (red)    #ff6e6e
+  Text default    #f0f0f2
+  Text muted      #9090a0
+  Text dim        #5a5a6a
+
+
+SECURITY & VALIDATION
+---------------------
+
+  - Passwords hashed with bcryptjs (12 salt rounds)
+  - JWT tokens expire after 7 days (configurable via env)
+  - Rate limiting applied to auth endpoints
+  - CORS configured for frontend origin
+  - Zod validation on all incoming request bodies
+  - Password never returned in API responses
+  - Vague auth error messages (no email enumeration)
+
+
+DIAGRAMS (Submittals/)
+----------------------
+
+  gitto_diagram.puml          PlantUML source -- full class/component diagram
+  gitto_activity_diagram.puml PlantUML source -- user activity/flow diagram
+  Gitto UML - Light Mode.png  Rendered class diagram
+  System Statechart Diagram.png  Rendered state chart
