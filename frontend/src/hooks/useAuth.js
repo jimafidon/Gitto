@@ -26,29 +26,28 @@ function normalizeUser(u) {
 export function AuthProvider({ children }) {
   const { data: session }     = useSession()
   const [user,    setUser]    = useState(null)
-  const [loading, setLoading] = useState(() => {
-    if (typeof window === 'undefined') return true
-    return Boolean(localStorage.getItem('gitto_token'))
-  })
+  const [loading, setLoading] = useState(true)
 
-  
+  // Runs once on mount — resolves any existing email/password session from localStorage
   useEffect(() => {
-    if (session?.backendToken) {
-      localStorage.setItem('gitto_token', session.backendToken)
-      authService.getMe()
-        .then(setUser)
-        .finally(() => setLoading(false))
-      return
-    }
-    
-    // On mount, check if there's a stored token and fetch the current user
     const token = localStorage.getItem('gitto_token')
     if (token) {
       authService.getMe()
         .then(u => setUser(normalizeUser(u)))
         .catch(() => localStorage.removeItem('gitto_token'))
         .finally(() => setLoading(false))
+    } else {
+      setLoading(false)
     }
+  }, [])
+
+  // Watches for a NextAuth Google session arriving after the page loads
+  useEffect(() => {
+    if (!session?.backendToken) return
+    localStorage.setItem('gitto_token', session.backendToken)
+    authService.getMe()
+      .then(u => setUser(normalizeUser(u)))
+      .finally(() => setLoading(false))
   }, [session])
 
   async function login(credentials) {
