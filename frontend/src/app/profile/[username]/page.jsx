@@ -7,7 +7,8 @@ import { use } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
 import { usersService } from '@/services/users.service'
-import Avatar from '@/components/Avatar'
+import Avatar from '@/app/components/Avatar'
+import MilestoneTimeline from '@/app/components/MilestoneTimeline'
 
 export default function ProfilePage({ params }) {
   const { username } = use(params)
@@ -103,7 +104,7 @@ export default function ProfilePage({ params }) {
         </div>
 
         <div className="profile-tabs">
-          {['projects', 'activity', 'milestones'].map(t => (
+          {['projects', 'milestones'].map(t => (
             <button key={t} className={`profile-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
@@ -112,7 +113,6 @@ export default function ProfilePage({ params }) {
 
         <div className="profile-content">
           {tab === 'projects' && <ProjectsTab userId={profile._id} />}
-          {tab === 'activity' && <ActivityTab userId={profile._id} />}
           {tab === 'milestones' && <MilestonesTab userId={profile._id} />}
         </div>
       </div>
@@ -167,22 +167,38 @@ function ProjectsTab({ userId }) {
   )
 }
 
-function ActivityTab({ userId }) {
-  return (
-    <div className="empty-state">
-      <div className="icon">📋</div>
-      <h3>Activity coming soon</h3>
-      <p>Recent activity will be shown here.</p>
-    </div>
-  )
-}
-
 function MilestonesTab({ userId }) {
-  return (
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading]   = useState(true)
+
+  useEffect(() => {
+    usersService.getProjects(userId)
+      .then(data => setProjects(data.projects || []))
+      .finally(() => setLoading(false))
+  }, [userId])
+
+  if (loading) return <div className="skeleton" style={{ height: 120, borderRadius: 12 }} />
+
+  const projectsWithMilestones = projects.filter(p => p.milestones?.length > 0)
+
+  if (projectsWithMilestones.length === 0) return (
     <div className="empty-state">
       <div className="icon">🎯</div>
-      <h3>Milestones coming soon</h3>
-      <p>Milestones across all projects will appear here.</p>
+      <h3>No milestones yet</h3>
+      <p>Milestones added to projects will appear here.</p>
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'grid', gap: 20 }}>
+      {projectsWithMilestones.map(p => (
+        <div key={p._id} className="card">
+          <Link href={`/project/${p._id}`} style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--accent)', marginBottom: 14, display: 'block' }}>
+            {p.title}
+          </Link>
+          <MilestoneTimeline milestones={p.milestones} />
+        </div>
+      ))}
     </div>
   )
 }
