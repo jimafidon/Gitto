@@ -42,7 +42,7 @@ api.interceptors.response.use(
         localStorage.removeItem('gitto_token')
         setTimeout(() => {
           window.location.href = '/login'
-        }, 600)
+        }, 100)
       }
     }
     return Promise.reject(error)
